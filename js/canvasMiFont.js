@@ -1,4 +1,4 @@
-var canvasWidth = 500;
+var canvasWidth = Math.min(500, $(window).width() - 20);
 var canvasHeight = canvasWidth;
 
 var strokeColor = "black";
@@ -13,6 +13,7 @@ var context = canvas.getContext("2d");
 canvas.width = canvasWidth;
 canvas.height = canvasHeight;
 
+$("#controller").css("width", canvasWidth+"px");
 drawGrid();
 
 $("#clear_btn").click(
@@ -29,47 +30,75 @@ $(".color_btn").click(
 	}
 )
 
+function beginStroke(point){
+	isMouseDown = true;
+	lastLoc = windowToCanvas(point.x, point.y);
+	lastTimestamp = new Date().getTime();
+}
+function endStroke(){
+	isMouseDown = false;
+}
 
+function moveStroke(point){
+	var curLoc = windowToCanvas(point.x, point.y);
+	var curTimestamp = new Date().getTime();
+	var s = calcDistance(curLoc, lastLoc);
+	var t = curTimestamp - lastTimestamp;
+
+	var lineWidth = calcLineWidth(t, s);
+	//draw
+	context.beginPath();
+	context.moveTo(lastLoc.x, lastLoc.y);
+	context.lineTo(curLoc.x, curLoc.y);
+
+	context.strokeStyle = strokeColor;
+	context.lineWidth = lineWidth;
+	context.lineCap = "round";
+	context.lineJoin = "round";
+	context.stroke();
+
+	lastLoc = curLoc;
+	lastTimestamp = curTimestamp;
+	lastLineWidth = lineWidth;
+}
+
+<!-- 鼠标点击事件 -->
 canvas.onmousedown = function(e){
 	e.preventDefault();
-	isMouseDown = true;
-	lastLoc = windowToCanvas(e.clientX, e.clientY);
-	lastTimestamp = new Date().getTime();
+	beginStroke( {x: e.clientX, y: e.clientY} );
 }
 canvas.onmouseup = function(e){
 	e.preventDefault();
-	isMouseDown = false;
+	endStroke();
 }
 canvas.onmouseout = function(e){
 	e.preventDefault();
-	isMouseDown = false;
+	endStroke();
 }
 canvas.onmousemove = function(e){
 	e.preventDefault();
 	if (isMouseDown){
-		//console.log(e.clientX, e.clientY);
-		var curLoc = windowToCanvas(e.clientX, e.clientY);
-		var curTimestamp = new Date().getTime();
-		var s = calcDistance(curLoc, lastLoc);
-		var t = curTimestamp - lastTimestamp;
-
-		var lineWidth = calcLineWidth(t, s);
-		//draw
-		context.beginPath();
-		context.moveTo(lastLoc.x, lastLoc.y);
-		context.lineTo(curLoc.x, curLoc.y);
-
-		context.strokeStyle = strokeColor;
-		context.lineWidth = lineWidth;
-		context.lineCap = "round";
-		context.lineJoin = "round";
-		context.stroke();
-
-		lastLoc = curLoc;
-		lastTimestamp = curTimestamp;
-		lastLineWidth = lineWidth;
+		moveStroke( {x: e.clientX, y: e.clientY} );
 	}
 }
+
+<!-- 触控点击事件 -->
+canvas.addEventListener('touchstart', function(e){
+	e.preventDefault()
+	touch = e.touches[0];
+	beginStroke( {x: touch.pageX, y: touch.pageY} );
+})
+canvas.addEventListener('touchmove', function(e){
+	e.preventDefault()
+	if (isMouseDown){
+		touch = e.touches[0];
+		moveStroke( {x: touch.pageX, y: touch.pageY} );
+	}
+})
+canvas.addEventListener('touchend', function(e){
+	e.preventDefault()
+	endStroke();
+})
 
 var maxLineWidth = 20;
 var minLineWidth = 1;
