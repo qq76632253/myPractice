@@ -33,7 +33,7 @@ body {
 .page {
 	display: none;
 	position: relative;
-	height: 100;
+	height: 100%;
 	max-width: 600px;
 	margin: 0 auto;
 	color:#fff;
@@ -162,6 +162,13 @@ body {
 #box.lv7 span {
     width: 14.285%;
     height: 14.285%;
+}
+
+.score{
+	position: absolute;
+	top: 10px;
+	left: 5px;
+	color: #adffe0;
 }
 
 .time{
